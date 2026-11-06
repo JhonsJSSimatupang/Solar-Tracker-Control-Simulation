@@ -1,4 +1,4 @@
-﻿# 📋 Project Plan
+﻿git commit -m "docs: establish capstone repository structure"# 📋 Project Plan
 
 ## Solar Tracker Control Simulation
 
