@@ -1,6 +1,12 @@
 # ☀️ Solar Tracker Control Simulation
 
-### Design and Simulation of a Solar Tracking Control System
+### Solar Tracking System Modeling and Control Simulation
+
+[![Project](https://img.shields.io/badge/Project-Capstone-blue)](https://github.com/JhonsJSSimatupang/Solar-Tracker-Control-Simulation)
+[![Program](https://img.shields.io/badge/Program-MathWorks%20Excellence%20in%20Innovation-orange)](https://www.mathworks.com/academia/student-challenge/mathworks-excellence-in-innovation-signup.html?tfa_1=Solar+Tracker+Control+Simulation&tfa_2=249)
+[![MATLAB](https://img.shields.io/badge/MATLAB-Modeling-orange?logo=mathworks&logoColor=white)](https://www.mathworks.com/products/matlab.html)
+[![Simulink](https://img.shields.io/badge/Simulink-Simulation-0076A8?logo=mathworks&logoColor=white)](https://www.mathworks.com/products/simulink.html)
+[![License](https://img.shields.io/badge/License-BSD--2--Clause-green)](LICENSE)
 
 ---
 
@@ -23,7 +29,7 @@ The project is developed as a Capstone Project, with this repository serving as 
 - Study the fundamental principles of solar tracking systems.
 - Understand the relationship between solar position and photovoltaic panel orientation.
 - Define the system requirements and proposed tracking approach.
-- Develop a mathematical and simulation model using MATLAB and Simulink.
+- Develop mathematical and simulation models using MATLAB and Simulink.
 - Design and implement an appropriate control strategy.
 - Evaluate system behavior under selected operating conditions.
 - Analyze simulation results and identify potential improvements.
@@ -32,9 +38,9 @@ The project is developed as a Capstone Project, with this repository serving as 
 
 ## 🧠 System Concept
 
-The project will explore a solar tracking system through a modeling and simulation workflow.
+The project explores a solar tracking system through a modeling and simulation workflow.
 
-The initial conceptual workflow is:
+The initial conceptual workflow is illustrated below:
 
 ```mermaid
 flowchart TD
@@ -46,9 +52,9 @@ flowchart TD
     F --> G[Simulation and Evaluation]
 ```
 
-The diagram represents an initial conceptual workflow for the project. The actual system architecture, tracking mechanism, control method, and model components will be determined during the system design stage.
+The diagram represents an initial conceptual workflow. The actual system architecture, tracking mechanism, control method, and model components will be determined during the system design stage.
 
-The final diagram will be updated according to the implemented system.
+The final system concept will be updated according to the implemented design.
 
 ---
 
@@ -61,7 +67,7 @@ The final diagram will be updated according to the implemented system.
 | Git        | Version control                                       |
 | GitHub     | Repository management and project documentation       |
 
-Additional MATLAB toolboxes and supporting tools will be identified according to the system requirements.
+Additional MATLAB toolboxes and supporting technologies will be identified according to the system requirements.
 
 ---
 
@@ -70,24 +76,29 @@ Additional MATLAB toolboxes and supporting tools will be identified according to
 ```text
 Solar-Tracker-Control-Simulation/
 │
-├── docs/               # Project planning and technical documentation
-├── src/                # MATLAB source code and scripts
-├── simulink/           # Simulink models and related files
-├── data/               # Input data and supporting datasets
-├── results/            # Simulation outputs and evaluation results
-│
 ├── README.md
 ├── LICENSE
-└── .gitignore
+├── .gitignore
+│
+├── docs/
+│   ├── PROJECT_PLAN.md
+│   ├── DEVELOPMENT_LOG.md
+│   ├── SYSTEM_DESIGN.md
+│   └── REFERENCES.md
+│
+├── src/
+├── simulink/
+├── data/
+└── results/
 ```
 
-| Directory   | Description                                                          |
-| ----------- | -------------------------------------------------------------------- |
-| `docs/`     | Project planning, system design, references, and development records |
-| `src/`      | MATLAB source code and computational scripts                         |
-| `simulink/` | Simulink models and simulation components                            |
-| `data/`     | Input data and supporting datasets                                   |
-| `results/`  | Simulation outputs, figures, and evaluation results                  |
+| Directory   | Description                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| `docs/`     | Project planning, technical documentation, and development records |
+| `src/`      | MATLAB source code and computational scripts                       |
+| `simulink/` | Simulink models and related files                                  |
+| `data/`     | Input data and supporting datasets                                 |
+| `results/`  | Simulation outputs, figures, and evaluation results                |
 
 ---
 
@@ -97,10 +108,10 @@ Solar-Tracker-Control-Simulation/
 
 The following tools are expected to be used during development:
 
-- MATLAB.
-- Simulink.
-- Git.
-- GitHub account for repository access.
+- MATLAB
+- Simulink
+- Git
+- GitHub account
 
 Exact MATLAB versions, required toolboxes, and additional dependencies will be documented after the development environment is finalized.
 
@@ -118,9 +129,9 @@ Navigate to the project directory:
 cd Solar-Tracker-Control-Simulation
 ```
 
-Open the project directory in MATLAB or use the repository through Visual Studio Code.
+Open the project directory in MATLAB or Visual Studio Code.
 
-The main execution entry point and detailed simulation instructions will be documented after the system implementation is established.
+The main execution entry point and simulation instructions will be documented after the system implementation is established.
 
 ---
 
@@ -132,11 +143,11 @@ Initial testing areas may include:
 
 | Test Scenario            | Description                                              | Status  |
 | ------------------------ | -------------------------------------------------------- | ------- |
-| Baseline operation       | Observe the initial system behavior                      | Planned |
-| Solar position variation | Examine tracking behavior under changing solar positions | Planned |
-| Tracking response        | Evaluate the response of the tracking control system     | Planned |
-| Control performance      | Analyze the behavior of the selected control approach    | Planned |
-| System performance       | Evaluate the overall simulation performance              | Planned |
+| Baseline Operation       | Observe the initial system behavior                      | Planned |
+| Solar Position Variation | Examine tracking behavior under changing solar positions | Planned |
+| Tracking Response        | Evaluate the response of the tracking control system     | Planned |
+| Control Performance      | Analyze the behavior of the selected control approach    | Planned |
+| System Performance       | Evaluate the overall simulation performance              | Planned |
 
 The final test scenarios will be refined according to the approved system design and project requirements.
 
@@ -151,7 +162,7 @@ Potential results to be documented include:
 - Solar tracking response.
 - PV panel orientation.
 - System response characteristics.
-- Relevant simulation graphs and waveforms.
+- Simulation graphs and waveforms.
 - Performance comparison under selected operating conditions.
 - Analysis of system behavior and limitations.
 
@@ -161,12 +172,12 @@ Simulation figures, quantitative measurements, and performance conclusions will 
 
 ## 📚 Documentation
 
-| Document                                   | Description                                                |
-| ------------------------------------------ | ---------------------------------------------------------- |
-| [Project Plan](docs/PROJECT_PLAN.md)       | Project objectives, scope, and development roadmap         |
-| [Development Log](docs/DEVELOPMENT_LOG.md) | Chronological record of project activities and progress    |
-| System Design                              | System architecture and design decisions (to be developed) |
-| References                                 | Research papers and technical resources (to be developed)  |
+| Document                                   | Description                                             |
+| ------------------------------------------ | ------------------------------------------------------- |
+| [Project Plan](docs/PROJECT_PLAN.md)       | Project objectives, scope, and development roadmap      |
+| [Development Log](docs/DEVELOPMENT_LOG.md) | Chronological record of project activities and progress |
+| [System Design](docs/SYSTEM_DESIGN.md)     | System architecture and design decisions                |
+| [References](docs/REFERENCES.md)           | Research papers and technical resources                 |
 
 Additional technical documentation will be maintained in the `docs/` directory as the project develops.
 
@@ -182,8 +193,8 @@ The project is also associated with **MathWorks Excellence in Innovation**, unde
 | ------------------------- | -------------------------------- |
 | Project Title             | Solar Tracker Control Simulation |
 | Project ID                | 249                              |
-| Main Development Platform | MATLAB and Simulink              |
 | Project Type              | Capstone Project                 |
+| Main Development Platform | MATLAB and Simulink              |
 
 Related program:
 
@@ -193,9 +204,9 @@ Related program:
 
 ## 👤 Project Author
 
-| Name                   | Role                       |
-| ---------------------- | -------------------------- |
-| Jhons Janner Samuel S. | Capstone Project Developer |
+**Jhons Janner Samuel S.**
+
+Capstone Project Developer
 
 ---
 
@@ -206,9 +217,9 @@ This project is distributed under the BSD 2-Clause License. See the [LICENSE](LI
 ---
 
 <p align="center">
-  Building, modeling, and evaluating solar tracking systems through simulation.
+  <i>Building, modeling, and evaluating solar tracking systems through simulation.</i>
 </p>
 
 <p align="center">
-  <i>Developed as a Capstone Project using MATLAB and Simulink.</i>
+  Developed as a Capstone Project using MATLAB and Simulink.
 </p>
