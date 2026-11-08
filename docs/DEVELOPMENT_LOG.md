@@ -245,6 +245,78 @@ deferred to Gate G3.
 
 ---
 
+### November 9, 2026 — Clear-Sky Irradiance and Daily Energy Model
+
+**Status:** Completed (MATLAB-level model)
+
+#### Activities
+
+- [x] Implemented `clear_sky_irradiance.m` with the Meinel direct-beam model.
+- [x] Implemented `plane_of_array_irradiance.m` with the isotropic sky model.
+- [x] Implemented `energy_metrics.m` for PV and actuator energy integration.
+- [x] Implemented `daily_energy_simulation.m` for fixed, azimuth, and dual-axis cases.
+- [x] Implemented `compare_daily_energy.m` and generated the daily comparison CSV and PNG.
+- [x] Added 10 unit tests in `tests/unit/test_energy_model.m`; the suite is now 34/34 passing.
+- [x] Verified the Code Analyzer is clean (excluding the environment settings-file warning).
+
+#### Progress
+
+The MATLAB-side energy model now covers the full chain from solar position to
+daily PV energy:
+
+1. `solar_position` gives the sun azimuth and elevation.
+2. `clear_sky_irradiance` gives DNI, DHI, and GHI.
+3. `plane_of_array_irradiance` applies the isotropic sky model to the panel.
+4. `daily_energy_simulation` computes the PV power and daily energy.
+5. `energy_metrics` integrates the PV and actuator power into net energy.
+
+The daily results for Malang on 2026-03-21 at 5-minute sampling are:
+
+| Configuration | Daily PV energy (kWh) | Gain vs fixed |
+|---|---:|---:|
+| Fixed, tilt 8° | 1.8359 | — |
+| Single-axis azimuth, tilt 43° | 2.2987 | +25.2% |
+| Dual-axis | 2.4487 | +33.4% |
+
+The daily gain is lower than the annual direct-beam proxy (+43.4%) because the
+daily model includes the diffuse component and a ground-reflected term. The
+seasonal check gives +40.1% on 2026-06-21 and +47.0% on 2026-12-21 for the
+dual-axis case. This is the expected behavior: the tracker gain is highest in
+the southern summer, when the sun path is longer and the fixed north-facing
+panel is less well aligned.
+
+#### Challenges
+
+- The isotropic sky model needs a diffuse fraction. A constant DHI/DNI = 0.10
+  is used for the clear-sky screening model; a more detailed model can replace
+  it when measured data are added.
+- The fixed-panel daily energy is higher in December than in June, even though
+  the site is in the southern hemisphere. The reason is that the panel tilt is
+  only 8°, so the high December sun is captured well; the north-facing panel
+  does not suffer much from the small north–south misalignment.
+- The actuator energy is not yet included in the daily simulation because the
+  motor and controller model does not exist. The `energy_metrics` function is
+  ready to accept the actuator power from the Simulink model.
+
+#### Decisions
+
+- Clear-sky model: Meinel direct beam, constant diffuse fraction 0.10, and
+  isotropic sky diffuse on the panel.
+- Ground albedo: 0.20.
+- PV model: linear efficiency 18% with an 85% system loss factor.
+- Fixed reference: tilt 8°, azimuth 0° (north).
+- Azimuth reference: fixed tilt 43°, azimuth follows the sun.
+
+#### Next Steps
+
+- Install the five missing products and close Gate G0.
+- Build the Simscape model and connect the actuator power to `energy_metrics`.
+- Replace the constant diffuse fraction with a measured or scenario-based model.
+- Add the cloud, rain, and night scenarios.
+- Confirm the annual energy with a full-year daily simulation.
+
+---
+
 ## Development Update Template
 
 Use this template whenever a new project activity or milestone takes place.

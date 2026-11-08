@@ -2,7 +2,7 @@
 
 ## Solar Tracker Control Simulation
 
-> **Status:** Unit tests implemented and passing (24/24 on 2026-11-09).
+> **Status:** Unit tests implemented and passing (34/34 on 2026-11-09).
 > Model, integration, scenario, and regression tests are pending installation of
 > the Simscape and Control System Toolbox products.
 
@@ -42,7 +42,7 @@ documented test script.
 | Level | Purpose | Location | Status |
 |---|---|---|---|
 | Static | Detect code and model quality issues | Code Analyzer, Model Advisor | Code Analyzer available; Model Advisor pending |
-| Unit | Verify individual functions | `tests/unit/` | Implemented, 24/24 passing |
+| Unit | Verify individual functions | `tests/unit/` | Implemented, 34/34 passing |
 | Model | Verify controllers, actuators, and mechanics | `tests/model/` | Pending toolboxes |
 | Integration | Verify the full tracking chain | `tests/integration/` | Pending model |
 | Scenario | Verify behavior under operating conditions | `tests/scenarios/` | Pending model |
@@ -132,17 +132,32 @@ All tests are in `tests/unit/test_design_sizing.m`.
 | UT-SIZE-04 | `testKnownSizingValues` | Default parameters | Output torque, motor current within 1e-9 relative tolerance of the G2 values | Pass |
 | UT-SIZE-05 | `testGeometricInertiaEstimates` | Default parameters | Thin-plate estimates 2.56 and 3.56 kg·m²; used values not below the estimates | Pass |
 
-### 6.5 Planned unit tests
+### 6.5 Implemented — energy model
+
+All tests are in `tests/unit/test_energy_model.m`.
+
+| ID | Test method | Input | Pass criterion | Result |
+|---|---|---|---|---|
+| UT-ENERGY-05 | `testClearSkyAtZenith` | Sun elevation 90° | DNI 0.9471 kW/m²; DHI 0.09471; GHI 1.04181 | Pass |
+| UT-ENERGY-06 | `testClearSkyAtNight` | Sun elevation 0°, −10°, −90° | DNI, DHI, and GHI are zero | Pass |
+| UT-ENERGY-07 | `testClearSkyAirMass` | Sun elevation 30° | DNI matches `1.353 × 0.7^(2^0.678)` | Pass |
+| UT-ENERGY-08 | `testPoaHorizontalEqualsGhi` | Horizontal panel, elevation 30° | POA equals GHI | Pass |
+| UT-ENERGY-09 | `testPoaFacingSun` | Panel normal aligned with the sun | POA matches the isotropic-sky hand calculation | Pass |
+| UT-ENERGY-10 | `testPoaNightIsZero` | Sun elevation −10° | POA is zero | Pass |
+| UT-ENERGY-11 | `testEnergyIntegration` | 1 kW PV and 100 W actuator for 2 h | PV 2 kWh; actuator 0.2 kWh; net 1.8 kWh | Pass |
+| UT-ENERGY-12 | `testDailyDualAxisBeatsFixed` | Malang equinox, 10-minute sampling | Dual-axis daily energy > fixed; PV energy consistent with POA | Pass |
+| UT-ENERGY-13 | `testDailyEnergyIsZeroAtNight` | Malang equinox, 10-minute sampling | PV power is zero whenever the sun is below the horizon | Pass |
+| UT-ENERGY-14 | `testDailyComparisonTable` | Three configurations | Three rows; fixed gain 0; dual-axis gain > azimuth gain | Pass |
+
+### 6.6 Planned unit tests
 
 | ID | Test | Pass criterion |
 |---|---|---|
-| UT-ENERGY-05 | Plane-of-array irradiance | Matches hand calculation within 1% |
-| UT-ENERGY-06 | Daily energy integration | Matches numerical integration within 1% |
 | UT-STRAT-01 | Deadband logic | No command inside the deadband; command outside the deadband |
 | UT-STRAT-02 | Mode transitions | No chattering; transitions documented |
 | UT-STRAT-03 | Night stow with hysteresis | Tracker enters and leaves stow without chattering |
 
-### 6.6 Execution evidence
+### 6.7 Execution evidence
 
 Command:
 
@@ -159,12 +174,14 @@ Running test_axis_comparison
 ....
 Running test_design_sizing
 .....
+Running test_energy_model
+..........
 Running test_solar_position
 ..........
 Running test_target_angles
 .....
 
-Passed: 24, Failed: 0, Incomplete: 0
+Passed: 34, Failed: 0, Incomplete: 0
 ```
 
 ---
@@ -271,8 +288,8 @@ at Gate G2.
 | FR-07 | Actuator models | MT-ACT-01…04 | TBD | Open |
 | FR-08 | Two-axis mechanical model | MT-MECH-01…04 | TBD | Open |
 | G2 sizing | `src/analysis/design_sizing.m` | UT-SIZE-01…05 | 5/5 pass | Verified (unit) |
-| FR-09 | Irradiance model | UT-ENERGY-05 | TBD | Open |
-| FR-10 | Energy accounting | UT-ENERGY-06, IT-04 | TBD | Open |
+| FR-09 | Irradiance model | UT-ENERGY-05…10 | 6/6 pass | Verified (unit) |
+| FR-10 | Energy accounting | UT-ENERGY-11…14, IT-04 | 4/4 pass (unit); integration pending | Partially verified |
 | FR-11 | Scenario set | SC-01…07 | TBD | Open |
 | FR-12 | Fault detection and safe state | SC-07 | TBD | Open |
 | FR-13 | `run_project.m` | RP-01…04 | TBD | Open |
@@ -343,8 +360,10 @@ Current reproducible outputs:
 | Target-angle unit tests | 5/5 pass |
 | Axis-comparison unit tests | 4/4 pass |
 | Actuator sizing unit tests | 5/5 pass |
-| Total unit suite | 24/24 pass |
+| Energy model unit tests | 10/10 pass |
+| Total unit suite | 34/34 pass |
 | Axis comparison metrics and figure | Generated |
+| Daily energy comparison metrics and figure | Generated |
 | Gate G2 design calculations | Complete (preliminary) |
 | Simulink model | Not started; blocked by missing products |
 | Model, integration, and scenario tests | Pending model |

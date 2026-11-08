@@ -71,6 +71,7 @@ The project aims to:
 
 - [ ] Prepare the MATLAB development environment (missing Simscape and Control System Toolbox products).
 - [x] Develop the required MATLAB scripts for solar position, target angles, and axis analysis.
+- [x] Implement the clear-sky irradiance and daily energy model.
 - [ ] Create the Simulink model.
 - [ ] Implement the proposed system.
 - [ ] Integrate the system components.
@@ -144,7 +145,7 @@ Technical specifications and system architecture will be documented after the co
   Control System Toolbox, and Simulink Control Design.
 - Close Gate G1: formal review of the dual-axis requirements baseline.
 - Close Gate G2: confirm the preliminary actuator sizing with the dynamic
-  model and add the diffuse irradiance model.
+  model and connect the actuator energy to the net-energy metric.
 - Start Gate G3: build the Simscape Multibody and Simscape Electrical model.
 
 _Last updated: November 2026_

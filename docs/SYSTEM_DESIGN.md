@@ -248,21 +248,32 @@ friction, and wind disturbance.
 
 ### 7.6 Irradiance and Energy
 
-The energy model computes:
+The energy model is implemented in `src/energy/` and computes:
 
 - Solar incidence angle from the sun vector and the panel normal.
 - Direct normal irradiance (DNI), diffuse horizontal irradiance (DHI), and
-  global horizontal irradiance (GHI).
-- Plane-of-array irradiance using a simple isotropic or HDKR sky model.
+  global horizontal irradiance (GHI) with a Meinel clear-sky model.
+- Plane-of-array irradiance with the isotropic sky model.
 - Instantaneous PV power with a linear efficiency model, then daily energy.
 - Actuator electrical energy for both axes from voltage and current.
 - Net energy = captured PV energy − actuator energy.
 
-The baseline uses a clear-sky model. Measured NASA POWER or BMKG data can be
-loaded from `data/sample/` for the scenario tests.
+| Module | Function |
+|---|---|
+| `clear_sky_irradiance.m` | DNI, DHI, and GHI from the solar elevation |
+| `plane_of_array_irradiance.m` | Isotropic POA irradiance on a tilted panel |
+| `energy_metrics.m` | PV and actuator energy integration |
+| `daily_energy_simulation.m` | Full-day PV energy for one configuration |
+| `compare_daily_energy.m` | Fixed, azimuth, and dual-axis daily comparison |
+
+The clear-sky model uses the Meinel direct-beam expression
+`DNI = 1.353 × 0.7^(AM^0.678)` with `AM = 1/sin(elevation)`, a constant diffuse
+fraction `DHI = 0.10 × DNI`, and a ground albedo of 0.20. The model is a
+screening model; measured NASA POWER or BMKG data can replace it in the
+scenario tests.
 
 The analysis script `src/analysis/compare_tracker_axes.m` compares four cases
-with the same irradiance model:
+with the direct-beam proxy:
 
 1. Fixed panel at the optimal tilt.
 2. Single-axis azimuth tracker at the optimal fixed tilt.
@@ -270,9 +281,15 @@ with the same irradiance model:
 4. Ideal dual-axis tracker (panel normal follows the sun).
 
 The first-pass direct-beam proxy for Malang 2026 gives +43.4% for the ideal
-dual-axis case relative to the fixed optimum. This number is a screening
-estimate, not the final result; the diffuse model and actuator energy are added
-at Gate G2.
+dual-axis case relative to the fixed optimum. The daily model, which includes
+diffuse and ground-reflected irradiance, gives +33.4% on 2026-03-21, +40.1% on
+2026-06-21, and +47.0% on 2026-12-21. The daily model is the more realistic
+estimate; the annual proxy is retained as a fast screening tool.
+
+The actuator energy is not yet included in the daily simulation because the
+motor and controller model does not exist. `energy_metrics` accepts the
+actuator power from the Simulink model, so the net energy will be available
+when the model is built.
 
 ---
 

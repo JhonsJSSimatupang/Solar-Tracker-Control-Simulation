@@ -5,9 +5,10 @@
 > **Purpose:** define how the project is planned, executed, reviewed, tested, and documented. This document is the team's working agreement and the checklist for the final submission.
 
 > **Current status (2026-11-09):** the dual-axis requirements baseline is
-> drafted, the solar-position/target-angle/axis-comparison/actuator-sizing unit
-> tests pass (24/24), the Gate G2 preliminary sizing is complete, and Gate G0
-> is blocked by the missing Simscape and Control System Toolbox products.
+> drafted, the solar-position/target-angle/axis-comparison/actuator-sizing/energy
+> unit tests pass (34/34), the Gate G2 preliminary sizing and the daily energy
+> model are complete, and Gate G0 is blocked by the missing Simscape and Control
+> System Toolbox products.
 
 ---
 

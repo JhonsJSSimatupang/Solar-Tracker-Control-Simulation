@@ -101,6 +101,7 @@ Solar-Tracker-Control-Simulation/
 ├── src/
 │   ├── initialization/
 │   ├── sun_position/
+│   ├── energy/
 │   ├── controllers/
 │   └── analysis/
 │
@@ -109,9 +110,11 @@ Solar-Tracker-Control-Simulation/
 │
 ├── results/
 │   ├── figures/
-│   │   └── axis_comparison.png
+│   │   ├── axis_comparison.png
+│   │   └── daily_energy_comparison.png
 │   └── metrics/
-│       └── axis_comparison.csv
+│       ├── axis_comparison.csv
+│       └── daily_energy_comparison.csv
 │
 ├── docs/
 │   ├── PROJECT_PLAN.md
@@ -131,7 +134,8 @@ Solar-Tracker-Control-Simulation/
     │   ├── test_solar_position.m
     │   ├── test_target_angles.m
     │   ├── test_axis_comparison.m
-    │   └── test_design_sizing.m
+    │   ├── test_design_sizing.m
+    │   └── test_energy_model.m
     ├── check_environment.m
     └── run_unit_tests.m
 ```
@@ -202,14 +206,21 @@ results = run_unit_tests();
 assertSuccess(results);
 ```
 
-The current suite has 24 tests covering the solar position, target angles, axis
-comparison, and actuator sizing.
+The current suite has 34 tests covering the solar position, target angles, axis
+comparison, actuator sizing, and the energy model.
 
 To regenerate the annual axis comparison:
 
 ```matlab
 addpath(genpath('src'));
 results = compare_tracker_axes('WriteFiles', true);
+```
+
+To regenerate the daily energy comparison:
+
+```matlab
+addpath(genpath('src'));
+[results, details] = compare_daily_energy('WriteFiles', true);
 ```
 
 ---
@@ -226,6 +237,7 @@ Initial testing areas may include:
 | Target angles | Azimuth and panel-tilt commands, clamping, and night stow | Unit tests passing (5/5) |
 | Axis comparison | Annual fixed, single-axis, and dual-axis energy proxy | Completed; CSV and PNG generated |
 | Actuator sizing | Torque, current, voltage, and speed margins for both axes | Unit tests passing (5/5) |
+| Energy model | Clear-sky irradiance, plane-of-array, and daily energy integration | Unit tests passing (10/10) |
 | Baseline operation | Observe the initial two-axis system behavior | Pending Simscape model |
 | Tracking response | Evaluate the azimuth and elevation control loops | Pending model |
 | Control performance | Analyze the selected control approach | Pending model |
@@ -242,9 +254,9 @@ The numerical test cases and pass criteria are documented in
 ### Current results — axis screening
 
 The annual direct-beam proxy for Malang 2026 is available. It uses the
-NOAA/Meeus solar position and a Meinel clear-sky direct-beam model. Diffuse
-irradiance and actuator energy are not included yet, so the absolute values are
-screening estimates, not the final energy result.
+NOAA/Meeus solar position and a Meinel clear-sky direct-beam model. It excludes
+diffuse irradiance and actuator energy, so the absolute values are screening
+estimates, not the final energy result.
 
 | Configuration | Energy (kWh/m²/year) | Gain vs fixed |
 |---|---:|---:|
@@ -257,6 +269,30 @@ Generated files:
 
 - [`results/metrics/axis_comparison.csv`](results/metrics/axis_comparison.csv)
 - [`results/figures/axis_comparison.png`](results/figures/axis_comparison.png)
+
+### Current results — daily energy model
+
+The daily model adds diffuse and ground-reflected irradiance with the isotropic
+sky model. It uses a 1.6 m² panel, 18% PV efficiency, and an 85% system loss
+factor. Results for 2026-03-21 at 5-minute sampling:
+
+| Configuration | Daily PV energy (kWh) | Gain vs fixed |
+|---|---:|---:|
+| Fixed, tilt 8° | 1.836 | — |
+| Single-axis azimuth, tilt 43° | 2.299 | +25.2% |
+| Dual-axis | 2.449 | +33.4% |
+
+Seasonal check: the dual-axis gain is +40.1% on 2026-06-21 and +47.0% on
+2026-12-21. The daily gain is lower than the annual direct-beam proxy because
+the daily model includes the diffuse component and a ground-reflected term.
+
+Generated files:
+
+- [`results/metrics/daily_energy_comparison.csv`](results/metrics/daily_energy_comparison.csv)
+- [`results/figures/daily_energy_comparison.png`](results/figures/daily_energy_comparison.png)
+
+The actuator energy is not yet subtracted; `energy_metrics` is ready to accept
+the motor power from the Simulink model once it is built.
 
 ### Current results — preliminary actuator sizing
 

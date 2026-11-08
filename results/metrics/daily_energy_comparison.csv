@@ -1,0 +1,4 @@
+Configuration,Tilt_deg,PvEnergy_kWh,Gain_vs_Fixed_pct
+Fixed,8,1.83591561535286,0
+Single-axis azimuth,43,2.29867989994796,25.2061848989804
+Dual-axis,NaN,2.44872139845525,33.3787554274168
