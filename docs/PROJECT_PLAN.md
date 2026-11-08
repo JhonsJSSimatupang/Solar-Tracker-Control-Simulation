@@ -1,4 +1,4 @@
-﻿git commit -m "docs: establish capstone repository structure"# 📋 Project Plan
+# 📋 Project Plan
 
 ## Solar Tracker Control Simulation
 
@@ -23,7 +23,7 @@ The plan will evolve as the project progresses, particularly when system require
 | Project ID | 249 |
 | Development Platform | MATLAB & Simulink |
 | Related Program | MathWorks Excellence in Innovation |
-| Current Stage | Initial Preparation |
+| Current Stage | Gate G2 — preliminary actuator sizing complete; model blocked by missing products |
 
 ---
 
@@ -48,29 +48,29 @@ The project aims to:
 - [x] Establish the GitHub repository.
 - [x] Organize the initial directory structure.
 - [x] Prepare the main project documentation.
-- [ ] Define the initial project scope.
-- [ ] Identify expected project deliverables.
+- [x] Define the initial project scope.
+- [x] Identify expected project deliverables.
 
 ### Stage 2 — Literature Study
 
-- [ ] Study solar energy fundamentals.
-- [ ] Understand solar tracking principles.
-- [ ] Explore different solar tracking configurations.
-- [ ] Review relevant control system concepts.
-- [ ] Collect related research papers and references.
+- [x] Study solar energy fundamentals.
+- [x] Understand solar tracking principles.
+- [x] Explore different solar tracking configurations.
+- [x] Review relevant control system concepts.
+- [x] Collect related research papers and references.
 
 ### Stage 3 — System Design
 
-- [ ] Define system requirements.
-- [ ] Determine the proposed system configuration.
-- [ ] Develop the initial system architecture.
-- [ ] Determine the control approach.
-- [ ] Establish the simulation methodology.
+- [x] Define system requirements.
+- [x] Determine the proposed system configuration: dual-axis azimuth–elevation.
+- [x] Develop the initial system architecture.
+- [x] Determine the control approach: two PID loops.
+- [x] Establish the simulation methodology.
 
 ### Stage 4 — Development
 
-- [ ] Prepare the MATLAB development environment.
-- [ ] Develop the required MATLAB scripts.
+- [ ] Prepare the MATLAB development environment (missing Simscape and Control System Toolbox products).
+- [x] Develop the required MATLAB scripts for solar position, target angles, and axis analysis.
 - [ ] Create the Simulink model.
 - [ ] Implement the proposed system.
 - [ ] Integrate the system components.
@@ -137,5 +137,14 @@ The roadmap is subject to change based on literature findings, project requireme
 Technical specifications and system architecture will be documented after the corresponding decisions have been made.
 
 ---
+
+## 8. Current Focus
+
+- Close Gate G0: install Simscape, Simscape Multibody, Simscape Electrical,
+  Control System Toolbox, and Simulink Control Design.
+- Close Gate G1: formal review of the dual-axis requirements baseline.
+- Close Gate G2: confirm the preliminary actuator sizing with the dynamic
+  model and add the diffuse irradiance model.
+- Start Gate G3: build the Simscape Multibody and Simscape Electrical model.
 
 _Last updated: November 2026_

@@ -1,0 +1,29 @@
+# MATLAB / Simulink generated files
+*.asv
+*.autosave
+*.m~
+*.mdl~
+*.slx~
+*.slxc
+slprj/
+sccprj/
+codegen/
+work/
+
+# Simulink cache and build artifacts
+*.slx.r20*
+*.mdl.r20*
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Temporary files
+*.tmp
+*.log

@@ -1,0 +1,5 @@
+Configuration,OptimalTilt_deg,Energy_kWh_per_m2,Gain_vs_Fixed_pct
+Fixed (optimal tilt),8,2276.57852183819,0
+Single-axis azimuth (optimal tilt),43,3062.1914227029,34.5084912876352
+Horizontal N-S single-axis,NaN,3115.36713231133,36.8442644269465
+Dual-axis (ideal),NaN,3264.53591279109,43.3965875315025
