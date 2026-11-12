@@ -76,6 +76,10 @@ cfg.tracker.panel.inertiaAboutAzimuthAxis = 8.0; % kg*m^2
 cfg.tracker.designAngularAcceleration = 0.05; % rad/s^2
 cfg.tracker.designSlewRate = 2.0;             % deg/s
 cfg.tracker.windDisturbanceTorque = 10.0;     % N*m allowance for a balanced panel
+% Mean wind torque used in the closed-loop validation model. The design
+% allowance above is a worst case; the simulation uses a fraction of it so
+% the controllers are not validated against the sizing limit itself.
+cfg.tracker.windMeanTorque = 0.2 * cfg.tracker.windDisturbanceTorque; % N*m
 
 % Controller gains (preliminary; tune at Gate G2/G3)
 cfg.controller.azimuth.Kp = 1.0;
@@ -84,7 +88,18 @@ cfg.controller.azimuth.Kd = 0.01;
 cfg.controller.azimuth.filterCoefficient = 100; % derivative filter, rad/s
 cfg.controller.azimuth.outputMin = -24;         % V
 cfg.controller.azimuth.outputMax = 24;          % V
-cfg.controller.azimuth.rateLimit = 48;          % V/s
+% The drive can change the armature voltage within one control step, so the
+% rate limit is set to full scale in 10 ms. The earlier value of 48 V/s
+% delayed braking by about half a second and was the dominant cause of
+% overshoot on a 30 deg step.
+cfg.controller.azimuth.rateLimit = 2400;         % V/s
+% Gains tuned against the explicit DC-motor plant in
+% models/solar_tracker_plant.slx. The reduced-order baseline has a very
+% different voltage-to-angle gain, so it keeps the preliminary gains above.
+cfg.controller.azimuth.plantKp = 1.2;
+cfg.controller.azimuth.plantKi = 0.3;
+cfg.controller.azimuth.plantKd = 0.2;
+cfg.controller.azimuth.plantFilterCoefficient = 20; % rad/s
 
 cfg.controller.elevation.Kp = 1.0;
 cfg.controller.elevation.Ki = 0.1;
@@ -92,7 +107,11 @@ cfg.controller.elevation.Kd = 0.01;
 cfg.controller.elevation.filterCoefficient = 100;
 cfg.controller.elevation.outputMin = -24;       % V
 cfg.controller.elevation.outputMax = 24;        % V
-cfg.controller.elevation.rateLimit = 48;        % V/s
+cfg.controller.elevation.rateLimit = 2400;      % V/s
+cfg.controller.elevation.plantKp = 1.2;
+cfg.controller.elevation.plantKi = 0.3;
+cfg.controller.elevation.plantKd = 0.2;
+cfg.controller.elevation.plantFilterCoefficient = 20; % rad/s
 
 % Actuator parameters (preliminary; replace with the selected motors)
 cfg.actuator.azimuth.ratedVoltage = 24;          % V

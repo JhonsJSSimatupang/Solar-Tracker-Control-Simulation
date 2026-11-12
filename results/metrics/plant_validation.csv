@@ -1,0 +1,15 @@
+Scenario,Metric,Value,Unit,Criterion,Pass
+step azimuth,Rise time 10-90%,0.48,s,<= 10 s,1
+step azimuth,Overshoot,8.06904746280454,%,<= 10 %,1
+step azimuth,Settling time 2%,7.43,s,<= 20 s,1
+step azimuth,Steady-state error,0.0113203586560715,deg,<= 0.2 deg,1
+step azimuth,Peak current,5,A,<= 5.1 A,1
+step tilt,Rise time 10-90%,0.57,s,<= 10 s,1
+step tilt,Overshoot,6.84109287642777,%,<= 10 %,1
+step tilt,Settling time 2%,7.18,s,<= 20 s,1
+step tilt,Steady-state error,0.00730253035444406,deg,<= 0.2 deg,1
+step tilt,Peak current,5,A,<= 5.1 A,1
+tracking,Azimuth RMSE,0.010824904844551,deg,<= 0.5 deg,1
+tracking,Tilt RMSE,0.00994158808229857,deg,<= 0.5 deg,1
+tracking,Azimuth max error,0.347321738621531,deg,<= 2.0 deg,1
+tracking,Tilt max error,0.310129331932899,deg,<= 2.0 deg,1

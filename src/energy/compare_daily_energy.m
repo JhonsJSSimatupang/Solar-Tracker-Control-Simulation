@@ -3,7 +3,13 @@ function [results, details] = compare_daily_energy(options)
 %
 %   RESULTS = COMPARE_DAILY_ENERGY(Name, Value) runs DAILY_ENERGY_SIMULATION
 %   for the three configurations with the same irradiance model and returns
-%   a table with the daily PV energy and the gain against the fixed case.
+%   a table with the daily PV energy, the actuator energy, the net energy,
+%   and the gain against the fixed case.
+%
+%   The actuator energy uses the DC-motor and gear parameters from
+%   project_config through TRACKER_ACTUATOR_ENERGY, so the net energy is the
+%   primary comparison: a tracker that captures more irradiance but spends it
+%   on motors is not automatically better.
 %
 %   [RESULTS, DETAILS] = COMPARE_DAILY_ENERGY(...) also returns the full
 %   daily profiles for the three configurations.
@@ -57,19 +63,27 @@ fixed = daily_energy_simulation(common{:}, ...
     'Configuration', 'fixed', 'FixedAzimuth', 0, ...
     'FixedTilt', options.fixedTilt);
 azimuth = daily_energy_simulation(common{:}, ...
-    'Configuration', 'azimuth', 'FixedTilt', options.azimuthTilt);
+    'Configuration', 'azimuth', 'FixedTilt', options.azimuthTilt, ...
+    'ActuatorParameters', actuatorParameters('azimuth'));
 dual = daily_energy_simulation(common{:}, ...
-    'Configuration', 'dual-axis');
+    'Configuration', 'dual-axis', ...
+    'ActuatorParameters', actuatorParameters('dual'));
 
 configuration = ["Fixed"; "Single-axis azimuth"; "Dual-axis"];
 tilt = [options.fixedTilt; options.azimuthTilt; NaN];
 pvEnergy_kWh = [fixed.pvEnergy_kWh; azimuth.pvEnergy_kWh; ...
     dual.pvEnergy_kWh];
+actuatorEnergy_kWh = [fixed.actuatorEnergy_kWh; ...
+    azimuth.actuatorEnergy_kWh; dual.actuatorEnergy_kWh];
+netEnergy_kWh = pvEnergy_kWh - actuatorEnergy_kWh;
 gain = 100 * (pvEnergy_kWh / fixed.pvEnergy_kWh - 1);
+netGain = 100 * (netEnergy_kWh / fixed.pvEnergy_kWh - 1);
 
-results = table(configuration, tilt, pvEnergy_kWh, gain, ...
-    'VariableNames', {'Configuration', 'Tilt_deg', ...
-    'PvEnergy_kWh', 'Gain_vs_Fixed_pct'});
+results = table(configuration, tilt, pvEnergy_kWh, actuatorEnergy_kWh, ...
+    netEnergy_kWh, gain, netGain, ...
+    'VariableNames', {'Configuration', 'Tilt_deg', 'PvEnergy_kWh', ...
+    'ActuatorEnergy_kWh', 'NetEnergy_kWh', 'Gain_vs_Fixed_pct', ...
+    'NetGain_vs_Fixed_pct'});
 results.Properties.Description = sprintf( ...
     'Daily clear-sky PV energy, %s, %g-minute sampling', ...
     string(options.date), options.sampleTimeMinutes);
@@ -111,5 +125,43 @@ if options.writeFiles
     exportgraphics(fig, fullfile(figuresDir, ...
         'daily_energy_comparison.png'), 'Resolution', 200);
     close(fig);
+end
+end
+
+% -------------------------------------------------------------------------
+
+function params = actuatorParameters(mode)
+% Build the actuator model from the project configuration. The fixed case has
+% no motors at all, and the single-axis case has no elevation motor, so the
+% gravity amplitude is zeroed rather than the axis removed: a zero disturbance
+% and a constant tilt give exactly zero elevation energy.
+cfg = project_config();
+
+params.azimuth.gearRatio = cfg.tracker.azimuth.gearRatio;
+params.azimuth.gearEfficiency = cfg.tracker.azimuth.gearEfficiency;
+params.azimuth.staticFriction = cfg.actuator.azimuth.staticFriction;
+params.azimuth.torqueConstant = cfg.actuator.azimuth.torqueConstant;
+params.azimuth.backEmfConstant = cfg.actuator.azimuth.backEmfConstant;
+params.azimuth.armatureResistance = ...
+    cfg.actuator.azimuth.armatureResistance;
+params.azimuth.ratedVoltage = cfg.actuator.azimuth.ratedVoltage;
+params.azimuth.currentLimit = cfg.actuator.azimuth.currentLimit;
+params.azimuth.disturbanceTorque = cfg.tracker.windMeanTorque;
+
+params.elevation.gearRatio = cfg.tracker.elevation.gearRatio;
+params.elevation.gearEfficiency = cfg.tracker.elevation.gearEfficiency;
+params.elevation.staticFriction = cfg.actuator.elevation.staticFriction;
+params.elevation.torqueConstant = cfg.actuator.elevation.torqueConstant;
+params.elevation.backEmfConstant = cfg.actuator.elevation.backEmfConstant;
+params.elevation.armatureResistance = ...
+    cfg.actuator.elevation.armatureResistance;
+params.elevation.ratedVoltage = cfg.actuator.elevation.ratedVoltage;
+params.elevation.currentLimit = cfg.actuator.elevation.currentLimit;
+params.elevation.gravityTorqueAmplitude = cfg.tracker.panel.mass * 9.81 ...
+    * cfg.tracker.panel.centerOfMassOffset;
+
+if strcmp(mode, 'azimuth')
+    params.elevation.gravityTorqueAmplitude = 0;
+    params.azimuth.disturbanceTorque = cfg.tracker.windMeanTorque;
 end
 end

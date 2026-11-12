@@ -1,0 +1,7 @@
+Metric,Value,Unit
+Azimuth RMSE,0.186635787676891,deg
+Tilt RMSE,0.0777843562346717,deg
+Azimuth max |error|,3.94221601311695,deg
+Tilt max |error|,1.32313591541924,deg
+Samples,86401,samples
+Simulated duration,86400,s

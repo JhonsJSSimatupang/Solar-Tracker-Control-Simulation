@@ -115,6 +115,47 @@ classdef test_energy_model < matlab.unittest.TestCase
                 'AbsTol', 1e-12);
             testCase.verifyGreaterThan(results.Gain_vs_Fixed_pct(3), ...
                 results.Gain_vs_Fixed_pct(2));
+
+            % The net gain must be lower than the PV gain, because the
+            % tracker pays for its own motion, and it must still be positive.
+            testCase.verifyEqual(results.ActuatorEnergy_kWh(1), 0, ...
+                'AbsTol', 1e-12);
+            testCase.verifyGreaterThan(results.ActuatorEnergy_kWh(3), 0);
+            testCase.verifyLessThan(results.NetGain_vs_Fixed_pct(3), ...
+                results.Gain_vs_Fixed_pct(3));
+            testCase.verifyGreaterThan(results.NetGain_vs_Fixed_pct(3), 0);
+        end
+
+        function testActuatorHoldingCurrent(testCase)
+            % At tilt 0 the panel centre of mass gives m*g*L = 5.886 N*m.
+            % With the 150:1, 70 % elevation gear and Kt = 0.05 N*m/A the
+            % motor needs 1.12 A, and Ra = 1.2 ohm gives about 1.5 W.
+            cfg = project_config();
+            p.elevation.gearRatio = cfg.tracker.elevation.gearRatio;
+            p.elevation.gearEfficiency = ...
+                cfg.tracker.elevation.gearEfficiency;
+            p.elevation.staticFriction = 0;
+            p.elevation.torqueConstant = ...
+                cfg.actuator.elevation.torqueConstant;
+            p.elevation.backEmfConstant = ...
+                cfg.actuator.elevation.backEmfConstant;
+            p.elevation.armatureResistance = ...
+                cfg.actuator.elevation.armatureResistance;
+            p.elevation.ratedVoltage = cfg.actuator.elevation.ratedVoltage;
+            p.elevation.currentLimit = cfg.actuator.elevation.currentLimit;
+            p.elevation.gravityTorqueAmplitude = cfg.tracker.panel.mass ...
+                * 9.81 * cfg.tracker.panel.centerOfMassOffset;
+            p.azimuth = p.elevation;
+            p.azimuth.gravityTorqueAmplitude = 0;
+            p.azimuth.disturbanceTorque = 0;
+
+            time = datetime(2026, 3, 21, 0, 0, 0) + minutes(0:1);
+            [power, details] = tracker_actuator_energy( ...
+                time, [0; 0], [0; 0], p);
+
+            testCase.verifyEqual(details.elevation.current_A(1), ...
+                1.1211, 'AbsTol', 1e-3);
+            testCase.verifyEqual(power(1), 1.508, 'AbsTol', 1e-2);
         end
     end
 end

@@ -9,17 +9,24 @@ function status = check_environment()
 %   STATUS is a struct with the fields Required, Optional, MissingRequired,
 %   and AllRequiredInstalled.
 
+% MATLAB and Simulink run the baseline model and every unit test.
+% Simscape and Simscape Electrical build the explicit DC-motor axis plant.
 requiredProducts = [
     "MATLAB"
     "Simulink"
     "Simscape"
-    "Simscape Multibody"
     "Simscape Electrical"
-    "Control System Toolbox"
-    "Simulink Control Design"
 ];
 
+% Simscape Multibody is NOT used: the tracker axes are modelled with
+% lumped-parameter rotational dynamics, which needs far fewer blocks and
+% avoids the multibody solver cost on a 24-hour run. Control System Toolbox is
+% not referenced by any current file; it stays optional in case the loops are
+% tuned with pidtune later.
 optionalProducts = [
+    "Simscape Multibody"
+    "Control System Toolbox"
+    "Simulink Control Design"
     "Stateflow"
     "Simulink Test"
     "Simulink Coverage"

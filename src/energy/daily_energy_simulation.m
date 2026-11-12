@@ -18,9 +18,12 @@ function results = daily_energy_simulation(options)
 %       PvEfficiency      default 0.18
 %       SystemLossFactor  default 0.85
 %       Albedo            default 0.20
+%       ActuatorParameters  optional struct for the motor and gear model;
+%                           when empty, actuator energy is reported as zero
 %
 %   RESULTS fields include the time vector, sun angles, panel angles, POA
-%   irradiance, PV power, and the daily energy metrics.
+%   irradiance, PV power, actuator power, and the PV, actuator, and net
+%   daily energy.
 %
 %   Example:
 %       fixed = daily_energy_simulation('Configuration', 'fixed');
@@ -56,6 +59,7 @@ arguments
         {mustBeBetween(options.systemLossFactor, 0, 1)} = 0.85
     options.albedo (1, 1) double ...
         {mustBeBetween(options.albedo, 0, 1)} = 0.20
+    options.actuatorParameters (1, 1) struct = struct()
 end
 
 startOfDay = dateshift(options.date, 'start', 'day');
@@ -91,7 +95,14 @@ pvPower_kW = poa * options.panelArea * options.pvEfficiency ...
     * options.systemLossFactor;
 pvPower_kW(sunElevation <= 0) = 0;
 
-metrics = energy_metrics(time, pvPower_kW, zeros(size(time)));
+if isempty(fieldnames(options.actuatorParameters))
+    actuatorPower_W = zeros(size(time));
+else
+    actuatorPower_W = tracker_actuator_energy(time, panelAzimuth, ...
+        panelTilt, options.actuatorParameters);
+end
+
+metrics = energy_metrics(time, pvPower_kW, actuatorPower_W);
 
 results.configuration = options.configuration;
 results.date = startOfDay;
@@ -102,9 +113,12 @@ results.panelAzimuth = panelAzimuth;
 results.panelTilt = panelTilt;
 results.poaIrradiance = poa;
 results.pvPower_kW = pvPower_kW;
+results.actuatorPower_W = actuatorPower_W;
 results.poaEnergy_kWh_per_m2 = sum(poa(1:end-1)) ...
     * (options.sampleTimeMinutes / 60);
 results.pvEnergy_kWh = metrics.pvEnergy_kWh;
+results.actuatorEnergy_kWh = metrics.actuatorEnergy_kWh;
+results.netEnergy_kWh = metrics.netEnergy_kWh;
 results.peakPvPower_kW = metrics.peakPvPower_kW;
 results.meanPoa_kW_per_m2 = mean(poa(sunElevation > 0));
 end
