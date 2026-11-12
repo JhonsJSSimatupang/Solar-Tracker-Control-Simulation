@@ -5,10 +5,11 @@
 > **Purpose:** define how the project is planned, executed, reviewed, tested, and documented. This document is the team's working agreement and the checklist for the final submission.
 
 > **Current status (2026-11-09):** the dual-axis requirements baseline is
-> drafted, the solar-position/target-angle/axis-comparison/actuator-sizing/energy
-> unit tests pass (34/34), the Gate G2 preliminary sizing and the daily energy
-> model are complete, and Gate G0 is blocked by the missing Simscape and Control
-> System Toolbox products.
+> drafted, the solar-position/target-angle/axis-comparison/actuator-sizing/energy/
+> mode-logic unit tests pass (50/50), the Gate G2 preliminary sizing, the daily
+> energy model, and the mode supervisor are complete. All required products are
+> installed, the baseline Simulink model runs end-to-end, and the one-click
+> entry point generates tracking metrics and a response figure.
 
 ---
 
@@ -88,9 +89,9 @@ Each phase ends with a **review gate**. The next phase does not start until the 
 
 **Gate G0 — Setup complete**
 
-- [ ] `check_environment` reports `All required products are installed`.
-- [ ] `run_project.m` executes without errors.
-- [ ] MATLAB version and toolboxes are recorded in `docs/DEVELOPMENT_LOG.md`.
+- [x] `check_environment` reports `All required products are installed`.
+- [x] `run_project.m` executes without errors.
+- [x] MATLAB version and toolboxes are recorded in `docs/DEVELOPMENT_LOG.md`.
 - [ ] Roles are assigned.
 
 ---
@@ -464,7 +465,7 @@ For every non-trivial AI-assisted change:
 - [ ] README with description, setup, run steps, results, dependencies.
 - [ ] `run_project.m` runs end-to-end from a clean clone.
 - [ ] Simulink models and source code included.
-- [ ] Sample data in `data/sample/`.
+- [x] Self-contained synthetic inputs (no external download).
 - [ ] Tests and expected outputs included.
 - [ ] Report or usage guide in `docs/`.
 - [ ] Demo video or GIF.

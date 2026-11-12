@@ -12,14 +12,14 @@ Recorded on **November 9, 2026**:
 
 | Item | Value |
 |---|---|
-| MATLAB | R2026a Update 4 (26.1.0.3312084) |
+| MATLAB | R2026a Update 5 (26.1.0.3346908) |
 | Operating system | Windows 11 Home Single Language (Build 26200) |
-| Installed products | MATLAB, Simulink, Stateflow, Fuzzy Logic Toolbox, MATLAB MCP Server Toolbox |
-| Missing required products | Simscape, Simscape Multibody, Simscape Electrical, Control System Toolbox, Simulink Control Design |
+| Installed products | MATLAB, Simulink, Simscape, Simscape Multibody, Simscape Electrical, Control System Toolbox, MATLAB MCP Server Toolbox |
+| Optional products not installed | Simulink Control Design, Stateflow, Simulink Test, Simulink Coverage, Optimization Toolbox, Statistics and Machine Learning Toolbox, Symbolic Math Toolbox, Fuzzy Logic Toolbox, Deep Learning Toolbox, MATLAB Report Generator |
 
-The unit tests for solar position, target angles, and axis comparison run with
-the installed products. Simulink/Simscape model work is blocked until the
-missing products are installed.
+The unit tests run with the installed products. The baseline Simulink model
+uses standard Simulink blocks and runs end-to-end. The Simscape Multibody and
+Simscape Electrical plant model is the next Gate G3 task.
 
 Run `tests/check_environment.m` to refresh this information.
 
@@ -69,9 +69,11 @@ A value of `1` means the feature is available on the license.
 | Simscape Multibody | Mechanical tracker model | `SimMechanics` |
 | Simscape Electrical | Motor and electrical model | `Power_System_Blocks` |
 | Control System Toolbox | PID design and analysis | `Control_Toolbox` |
-| Simulink Control Design | Controller tuning and linear analysis | `Simulink_Control_Design` |
 
-All seven products are required for the project.
+All six products in this table are required for the project.
+
+> Simulink Control Design is optional. It is only needed for interactive
+> controller tuning and linear analysis; the baseline model does not use it.
 
 ---
 
@@ -79,6 +81,7 @@ All seven products are required for the project.
 
 | Product | Use |
 |---|---|
+| Simulink Control Design | Interactive controller tuning and linear analysis |
 | Stateflow | Operating modes (day, night, cloudy, fault) |
 | Simulink Test | Formal test harnesses and test sequences |
 | Simulink Coverage | Model coverage analysis |
@@ -152,17 +155,18 @@ Bookmark and verify access to:
 - [NASA POWER](https://power.larc.nasa.gov/) — irradiance and weather data.
 - [BMKG](https://www.bmkg.go.id/) — Indonesian weather data.
 
-Store a small sample dataset in `data/sample/` so tests can run offline.
+The test suite uses synthetic inputs and runs without an internet connection; no
+sample dataset is required.
 
 ---
 
 ## 10. Gate G0 Checklist
 
 - [ ] MathWorks account linked to the campus license.
-- [ ] All required products installed.
-- [ ] `check_environment` reports `All required products are installed`.
-- [ ] MATLAB version and toolbox list recorded in `docs/DEVELOPMENT_LOG.md`.
-- [ ] Git and GitHub access verified.
+- [x] All required products installed.
+- [x] `check_environment` reports `All required products are installed`.
+- [x] MATLAB version and toolbox list recorded in `docs/DEVELOPMENT_LOG.md`.
+- [x] Git and GitHub access verified.
 - [ ] VS Code MATLAB extension installed (optional but recommended).
 - [ ] Reference websites accessible.
 - [ ] Team roles assigned.

@@ -122,7 +122,7 @@ revised at Gate G2 after the motor and mechanical design calculations.
 | NFR-06 | Code quality. | Code Analyzer reports no errors; Model Advisor reports no unresolved errors. |
 | NFR-07 | Documentation. | README, system design, test plan, and results are complete and consistent. |
 | NFR-08 | AI transparency. | Every non-trivial AI-assisted change is recorded in `docs/AI_USAGE_LOG.md`. |
-| NFR-09 | Offline sample data. | The test suite runs without an internet connection using `data/sample/`. |
+| NFR-09 | Offline execution. | The test suite runs without an internet connection using synthetic inputs generated in code. |
 | NFR-10 | License. | The repository uses an open-source license (BSD-2-Clause or MIT). |
 
 ---
@@ -187,10 +187,22 @@ The target generator converts the sun position into commands for both axes.
 | `DEADBAND_HOLD` | Sun elevation > 0° and both errors ≤ deadband | Hold the last target on each axis |
 | `NIGHT_STOW` | Sun elevation ≤ 0° | Move to the stow position and stop |
 | `CLOUD_HOLD` | Cloud cover above threshold | Hold position to save actuator energy |
-| `FAULT_SAFE` | Fault detected | Disable both motors and hold the axes |
+| `FAULT_SAFE` | Fault detected | Disable both motors and hold the axes; latch until reset |
 
-The mode logic will be implemented in Stateflow or a MATLAB Function block. The
-deadband is a configurable parameter per axis (preliminary value: 0.5°).
+The priority is `FAULT_SAFE`, then `NIGHT_STOW`, then `CLOUD_HOLD`, then the
+normal day modes. The reference implementation is
+`src/controllers/tracker_mode_logic.m`; the Stateflow chart or MATLAB Function
+block reproduces the same logic.
+
+- **Night hysteresis:** enter stow at or below 0° solar elevation and leave
+  stow only above 2°. This prevents chattering at sunrise and sunset.
+- **Deadband:** update the target when either axis error exceeds 0.5°;
+  otherwise hold the previous target and disable the motors.
+- **Fault:** a fault latches the safe state until `ResetFault` is true and the
+  fault input is clear.
+- **Azimuth error:** wrapped to the shortest signed angle in ±180°.
+
+The deadband is a configurable parameter per axis (preliminary value: 0.5°).
 
 The tilt conversion is explicit in the implementation:
 
@@ -204,47 +216,111 @@ the preliminary value. The final stow position is confirmed at Gate G2.
 
 ### 7.3 Controllers
 
-- Baseline: two PID controllers with anti-windup, output saturation, and a rate
-  limiter.
-- Inputs: azimuth error and tilt error (target minus measured).
-- Outputs: motor voltage or current commands.
-- Design method: root locus / frequency response using Control System Toolbox,
-  followed by simulation tuning.
-- The azimuth loop rejects wind and bearing disturbances. The elevation loop
-  additionally rejects the gravity torque of the panel, which varies with tilt.
-- Advanced option: gain-scheduled PID or fuzzy logic, compared against the PID
-  baseline in the same scenarios.
+Two independent PID loops, one per axis, both running at the configured 10 ms
+control step.
+
+- Inputs: azimuth error and tilt error (target minus measured), plus the
+  measured angle for the derivative path.
+- Outputs: armature voltage commands, which the plant converts to motor torque.
+- Structure:
+  - **P** — proportional gain `Kp` on the angle error.
+  - **I** — integral gain `Ki` with the integrator clamped to the voltage
+    limit, so the integral term cannot wind up while the drive saturates.
+  - **D** — filtered derivative `Kd·wf·s/(s + wf)` applied to the *measurement*,
+    not to the error. Differentiating the measurement avoids a derivative kick
+    whenever the target steps, which matters because the solar target is a
+    slowly moving ramp that occasionally jumps at mode changes.
+  - **Rate limit** — 2400 V/s, enough to swing the full 24 V rail inside one
+    10 ms step. An earlier 48 V/s value delayed braking by about half a second
+    and was the dominant cause of overshoot on a 30° step.
+  - **Saturation** — ±24 V, the supply rail.
+
+Two gain sets exist because the two models have very different voltage-to-angle
+gains:
+
+| Model | `Kp` | `Ki` | `Kd` | `wf` (rad/s) | Purpose |
+|---|---|---|---|---|---|
+| `solar_tracker.slx` (reduced order) | 1.0 | 0.1 | — | — | 24 h energy study, PI only |
+| `solar_tracker_plant.slx` (Simscape) | 1.2 | 0.3 | 0.2 | 20 | Control and actuator validation |
+
+Measured closed-loop behaviour on the Simscape plant: 8.07 % azimuth overshoot,
+6.84 % tilt overshoot, 7.43 s / 7.18 s settling, 0.011° / 0.007° steady-state
+error, and 5.000 A peak armature current on both axes (the current ceiling).
+
+The elevation loop additionally rejects the gravity torque of the panel. The
+gravity lever arm is `m·g·L·cos(tilt)`, so the disturbance is largest when the
+panel is horizontal and vanishes when it is vertical. The azimuth loop rejects
+a constant wind torque.
+
+The reduced-order model is deliberately a PI on a pure integrator at a 1 s step.
+It is the daily-energy workhorse: it runs 24 h in seconds, and the absolute
+angle errors it produces are validated against the plant model over short
+horizons. The full PID, the rate limiter, and the 10 ms step are exercised in
+`solar_tracker_plant.slx`.
 
 ### 7.4 Actuators and Motors
 
-Two brushed DC gear motors are used for the baseline. Each model includes:
+Two brushed DC gear motors are used for the baseline. Each axis plant is built
+from Simscape primitives in `models/build_axis_plant.m` rather than from the
+library DC Motor block, so that every equation and every parameter is visible
+and auditable.
 
-- Armature resistance and inductance.
-- Torque constant and back-EMF constant.
-- Gear ratio and gear efficiency.
-- Static and viscous friction.
-- Voltage and current limits.
-- Motor shaft inertia reflected to the output.
+The plant solves two coupled first-order equations:
 
-The azimuth stage uses a worm gear, following the Simscape example. The
-elevation stage uses a worm gear or a geared motor with a holding brake; the
-final choice is made at Gate G2. The motor and gear parameters are selected
-from a torque calculation that includes panel inertia, gravity torque, bearing
-friction, and wind disturbance.
+```
+electrical   V = Ra*i + La*di/dt + Ke*omega
+mechanical   J_eq*domega/dt = Kt*i - T_friction - T_dist/(eta*N)
+```
+
+with the load inertia reflected through the gear:
+
+```
+J_eq = J_load/N^2 + J_motor          theta_load = theta_motor/N
+```
+
+The H-bridge is modelled as a voltage source with a current ceiling. Since
+`i = (V - Ke*omega)/Ra`, the constraint `|i| <= currentLimit` is exactly a
+voltage window:
+
+```
+V in [Ke*omega - Ra*currentLimit,  Ke*omega + Ra*currentLimit]
+```
+
+The window bounds depend only on the shaft speed, which is a state, so the
+clamp adds no algebraic loop. The drive therefore behaves like a
+torque-limited amplifier: constant current during acceleration, voltage
+control once the back-EMF leaves room for the command. The voltage actually
+applied is logged, so the energy integral uses the real terminal voltage
+rather than the raw controller output.
+
+Friction is a `Rotational Friction` block with separate breakaway, Coulomb, and
+viscous terms, so stiction and the unpowered holding behaviour can be studied.
+Gear efficiency appears as a torque scaling `1/(eta*N)` on the disturbance, so
+the electrical energy drawn for a given load already includes the gear loss.
+
+Verification is done against closed-form results in
+`models/verify_axis_plant.m`: no-load steady state, current ceiling, and speed
+rise time. The parameters are listed in §10.
+
+The azimuth stage uses a worm gear. The elevation stage uses a worm gear with
+a high ratio; the final motor choice is confirmed at Gate G2. The motor and
+gear parameters come from a torque calculation that includes panel inertia,
+gravity torque, bearing friction, and wind disturbance.
 
 ### 7.5 Mechanical Tracker
 
-- Based on the Simscape Multibody example *Using the Worm and Gear Constraint
-  Block – Solar Tracker* for the azimuth stage.
-- One revolute joint for the azimuth axis (vertical).
-- One revolute joint for the elevation axis (horizontal).
-- A worm gear prevents back-driving on the azimuth axis when the motor is
-  unpowered. The elevation axis uses a worm gear or a brake for the same
-  purpose.
+- One revolute degree of freedom per axis: azimuth (vertical) and elevation
+  (horizontal).
+- The plant is a lumped-parameter rotational model: inertia, friction, and a
+  reflected gear ratio. It reproduces the joint dynamics without the modelling
+  and solver cost of a multibody assembly.
+- A worm gear prevents back-driving on both axes when the motor is unpowered.
 - Panel dimensions, mass, center of mass, and inertia are parameters.
-- Joint limits, damping, and friction are documented.
+- Joint limits, damping, and friction are documented in §10.
 - The tilt range is limited to 0°–85° to avoid the gimbal singularity at
   zenith, where the azimuth is undefined.
+- The gravity torque on the elevation axis is a function of the load angle and
+  is applied as a disturbance input to the plant.
 
 ### 7.6 Irradiance and Energy
 
@@ -263,7 +339,8 @@ The energy model is implemented in `src/energy/` and computes:
 | `clear_sky_irradiance.m` | DNI, DHI, and GHI from the solar elevation |
 | `plane_of_array_irradiance.m` | Isotropic POA irradiance on a tilted panel |
 | `energy_metrics.m` | PV and actuator energy integration |
-| `daily_energy_simulation.m` | Full-day PV energy for one configuration |
+| `tracker_actuator_energy.m` | Quasi-static DC-motor power for both axes |
+| `daily_energy_simulation.m` | Full-day PV and net energy for one configuration |
 | `compare_daily_energy.m` | Fixed, azimuth, and dual-axis daily comparison |
 
 The clear-sky model uses the Meinel direct-beam expression
@@ -283,13 +360,27 @@ with the direct-beam proxy:
 The first-pass direct-beam proxy for Malang 2026 gives +43.4% for the ideal
 dual-axis case relative to the fixed optimum. The daily model, which includes
 diffuse and ground-reflected irradiance, gives +33.4% on 2026-03-21, +40.1% on
-2026-06-21, and +47.0% on 2026-12-21. The daily model is the more realistic
-estimate; the annual proxy is retained as a fast screening tool.
+2026-06-21, and +47.0% on 2026-12-21 for captured PV energy. After actuator
+energy the dual-axis gain is +31.4%, +37.9%, and +44.9% respectively; the
+tracker pays 36 Wh/day for its own motion on the equinox. The daily model is
+the more realistic estimate; the annual proxy is retained as a fast screening
+tool.
 
-The actuator energy is not yet included in the daily simulation because the
-motor and controller model does not exist. `energy_metrics` accepts the
-actuator power from the Simulink model, so the net energy will be available
-when the model is built.
+The actuator power comes from `tracker_actuator_energy`, a quasi-static torque
+balance at each sample. For each axis:
+
+```
+moving    T_motor = (T_dist + T_friction*sign(w)) / (eta*N)
+holding   T_motor = sign(T_dist)*max(0, |T_dist| - T_friction) / (eta*N)
+I = |T_motor| / Kt,      V = Ke*|w_motor| + Ra*I,      P = V*I
+```
+
+`T_dist` is the tilt-dependent gravity torque `m·g·L·cos(tilt)` on elevation
+and the mean wind torque on azimuth. The model assumes a non-self-locking worm
+gear, so the elevation motor holds the panel against gravity all night. Braking
+energy is dissipated rather than recovered, because the drive has no
+regeneration path. Acceleration torque is omitted: at the 1–5 minute sample
+rates used for a daily run it is orders of magnitude below friction and gravity.
 
 ---
 
@@ -341,6 +432,12 @@ Sign conventions:
 | 2026-11-09 | Preliminary gear ratios: 100:1 azimuth, 150:1 elevation. | The G2 static sizing gives a required output torque of 11.4 N·m and 17.1 N·m. Both ratios keep the motor current below 3.3 A against a 5 A limit and give a torque margin of about 1.54. | Accepted (preliminary) |
 | 2026-11-09 | Preliminary motor: 24 V brushed DC, `K_t = 0.05 N·m/A`, `R = 1.2 Ω`. | Representative parameters for the simulation; the final motor is confirmed at Gate G3. | Accepted (preliminary) |
 | 2026-11-09 | Elevation holding: worm gear or brake to be decided at G3. | The holding current at tilt 0° is 1.12 A (1.5 W); a self-locking gear or brake can avoid the holding energy. | Open |
+| 2026-11-11 | Axis plants built from Simscape primitives, not Simscape Multibody. | Every equation and parameter stays visible and auditable; Multibody would add a product dependency and a large rigid-body model for a two-degree-of-freedom problem. | Accepted |
+| 2026-11-11 | Two models: reduced-order baseline for the 24 h study, Simscape plant for control validation. | A 10 ms step over 24 h needs 8.6 million fixed steps, which is not affordable on the project hardware. The plant model is used for short-horizon control and actuator validation. | Accepted |
+| 2026-11-11 | 10 ms control step with Simscape local solvers in the plant model. | Local solvers let a fixed-step parent model host the physical networks; the 10 ms rate matches the documented loop bandwidth. | Accepted |
+| 2026-11-11 | Filtered derivative on the measurement, not on the error. | Avoids a derivative kick at every target step, which is frequent at mode changes. | Accepted |
+| 2026-11-11 | Voltage rate limit 2400 V/s (full rail in one step). | 48 V/s delayed braking by about half a second and was the dominant cause of step overshoot. The drive can realistically slew the rail within one control step. | Accepted |
+| 2026-11-11 | Separate gain sets for the reduced-order and plant models. | The two plants differ by orders of magnitude in voltage-to-angle gain; one gain set cannot serve both. | Accepted |
 
 ---
 
@@ -373,7 +470,11 @@ dynamic model at Gate G3 confirms them. The full calculation is in
 | Motor torque constant | 0.05 N·m/A | Preliminary motor |
 | Motor back-EMF constant | 0.05 V·s/rad | Preliminary motor |
 | Motor current limit | 5 A | Driver limit |
-| Controller sample time | 0.01 s | Preliminary |
+| Controller sample time | 0.01 s | Plant model; the reduced-order baseline uses 1 s |
+| Controller voltage rate limit | 2400 V/s | Plant model only |
+| Plant PID gains `Kp`/`Ki`/`Kd` | 1.2 / 0.3 / 0.2 | Simscape plant, per axis |
+| Derivative filter | 20 rad/s | Simscape plant, per axis |
+| Mean wind torque (simulation) | 2.0 N·m | 20 % of the 10 N·m sizing allowance |
 | Energy sample time | 1 s | Preliminary |
 | Full-day solver step | 0.1 s | Preliminary; controller tests use 0.01 s |
 | Simulation duration | 24 h | One full day |
@@ -402,12 +503,15 @@ The values are recorded in `src/initialization/project_config.m` and in
 - [x] Calculate the panel inertia and the required torque for both axes.
 - [x] Select the preliminary motors and gear ratios for both axes.
 - [ ] Confirm the motor and gearbox selection with the dynamic model at Gate G3.
-- [ ] Define the stow position and the mechanical limits.
-- [ ] Select the irradiance model and the weather data source.
-- [ ] Validate the tilt and energy estimates with a diffuse sky model.
-- [ ] Define the exact PID step-response targets after the plant model exists.
+- [x] Define the exact PID step-response targets after the plant model exists.
+  Overshoot ≤ 10 %, settling ≤ 20 s, steady-state error ≤ 0.2°, peak current
+  ≤ 1.02 × current limit, tracking RMSE ≤ 0.5°, tracking max error ≤ 2.0°.
+- [x] Define the stow position and the mechanical limits.
+- [x] Select the clear-sky irradiance model.
+- [x] Validate the tilt and energy estimates with a diffuse sky model.
+- [ ] Add a measured or scenario-based weather data source.
 - [ ] Decide whether the third axis is included in the final submission.
-- [ ] Install the missing products for Gate G0.
+- [x] Install the required products for Gate G0.
 
 ---
 

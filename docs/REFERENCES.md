@@ -8,6 +8,7 @@ This document collects the references used throughout the project.
 
 ## Project and Program
 
+- [Milestone 1 — Official Project Research](references/MILESTONE_1_PROJECT_RESEARCH.md) (local summary of the official brief, requirements, and unknowns)
 - [MATLAB and Simulink Challenge Project Hub](https://github.com/mathworks/MATLAB-Simulink-Challenge-Project-Hub)
 - [Solar Tracker Control Simulation — Project 249](https://github.com/mathworks/MATLAB-Simulink-Challenge-Project-Hub/tree/main/projects/Solar%20Tracker%20Control%20Simulation)
 - [MathWorks Excellence in Innovation](https://www.mathworks.com/academia/student-challenge/mathworks-excellence-in-innovation-signup.html?tfa_1=Solar+Tracker+Control+Simulation&tfa_2=249)
